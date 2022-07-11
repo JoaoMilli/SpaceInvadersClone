@@ -4,7 +4,7 @@ const context = canvas.getContext('2d');
 canvas.width = window.innerWidth
 canvas.height = window.innerHeight
 
-let projeteis = []
+
 let intervaloDisparos
 
 const teclas = {
@@ -61,8 +61,6 @@ class NavePrincipal {
     
     desenhar() {
 
-        context.save()
-
         context.drawImage(this.imagem, this.posicao.x, this.posicao.y,
             this.largura, this.altura ) 
     }
@@ -104,8 +102,6 @@ class Inimigo {
 
     desenhar() {
 
-        context.save()
-
         context.drawImage(this.imagem, this.posicao.x, this.posicao.y,
             this.largura, this.altura ) 
     }
@@ -129,10 +125,9 @@ class InimigoNivel1 extends Inimigo {
     updateVelocidade(){
         if(this.posicao) {         
             this.velocidade.x = this.posicao.y % 10 === 0 ? 5 : -5
-            if (this.posicao.x === 0 || this.posicao.x > canvas.width - inimigo.largura){
+            if (this.posicao.x === 0 || this.posicao.x > canvas.width - this.largura){
                 this.velocidade.y = 5;
                 this.velocidade.x = -this.velocidade.x
-                inimigo.atirar()
             } else {
                 this.velocidade.y = 0;
             }
@@ -187,9 +182,26 @@ function animacao() {
     context.fillStyle = 'black'
     context.fillRect(0, 0, canvas.width, canvas.height)
     jogador.update()
-    inimigo.update()
 
-    projeteis.forEach((projetil) => projetil.update())
+    projeteis.forEach((projetil, indice) => {
+        if (projetil.posicao.x > canvas.width || projetil.posicao.x < 0 || projetil.posicao.y > canvas.height + projetil.raio || projetil.posicao.y < 0) {
+            projeteis.splice(indice,1)
+        } else {
+
+            let inimigoAtingido = inimigosNivel1.find((inimigo) => inimigo.posicao.x < projetil.posicao.x - projetil.raio && inimigo.posicao.x + inimigo.largura > projetil.posicao.x 
+            && inimigo.posicao.y < projetil.posicao.y - projetil.raio && inimigo.posicao.y + inimigo.altura > projetil.posicao.y)
+    
+            if (inimigoAtingido) {
+                projeteis.splice(indice, 1)
+                inimigosNivel1.splice(inimigosNivel1.indexOf(inimigoAtingido), 1)
+            }
+            else {
+                projetil.update()
+            }
+        }
+    })
+
+    inimigosNivel1.forEach((inimigo) => inimigo.update())
 
     if (teclas.a.pressionado && jogador.posicao.x >= 0) {
         jogador.velocidade.x = -5
@@ -210,9 +222,18 @@ function animacao() {
 
 }
 
+let projeteis = []
+
 const jogador = new NavePrincipal();
 
-const inimigo = new InimigoNivel1('./img/enemy1.png', 5, 0, 'blue')
+const inimigosNivel1 = []
+
+for (let x = 1; x < 11; x++) {
+    for (let y = 1; y < 6; y++) {
+        inimigosNivel1.push(new InimigoNivel1('./img/enemy1.png', x * 30, y * 30, 'blue'))
+    }
+}
+
 
 animacao()
 
