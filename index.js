@@ -1,11 +1,20 @@
+/* CONFIGURAÇÃO DO CANVAS */
+
 const canvas = document.querySelector('canvas');
 const context = canvas.getContext('2d');
 
 canvas.width = window.innerWidth
 canvas.height = window.innerHeight
 
+/*------------------------------------*/
 
-let intervaloDisparos
+/* VARIÁVEIS GLOBAIS */
+let stage;
+let projeteis = []
+let projeteisInimigos = []
+let inimigos = []
+
+let intervaloDisparos;
 
 const teclas = {
     a: {
@@ -29,6 +38,76 @@ const teclas = {
     }
 }
 
+/*---------------------------------*/
+
+
+/* Event listeners */
+
+window.addEventListener('keydown', (evento) => {
+    switch (evento.key) {
+        case 'a':
+            teclas.a.pressionado = true
+            break
+
+        case 's':
+            teclas.s.pressionado = true
+            break
+
+        case 'w':
+            teclas.w.pressionado = true
+            break
+
+        case 'd':
+            teclas.d.pressionado = true
+            break
+
+        case ' ':
+
+        if (!teclas.space.pressionado){
+            jogador.atirar()
+            intervaloDisparos = setInterval(() => jogador.atirar(), 500);
+        }
+        teclas.space.pressionado = true
+            
+        break
+
+        default:
+            break
+    }
+})
+
+window.addEventListener('keyup', (evento) => {
+    switch (evento.key) {
+        case 'a':
+            teclas.a.pressionado = false
+            break
+
+        case 's':
+            teclas.s.pressionado = false
+            break
+
+        case 'w':
+            teclas.w.pressionado = false
+            break
+
+        case 'd':
+            teclas.d.pressionado = false
+            break
+
+        case ' ':
+            clearInterval(intervaloDisparos)
+            teclas.space.pressionado = false
+            break
+
+        default:
+            break
+    }
+})
+
+/*------------------------------------------*/
+
+
+/* CLASSES */
 
 class NavePrincipal {
     constructor() {
@@ -124,7 +203,7 @@ class InimigoNivel1 extends Inimigo {
 
     updateVelocidade(){
         if(this.posicao) {         
-            this.velocidade.x = this.posicao.y % 10 === 0 ? 5 : -5
+            this.velocidade.x = this.posicao.y % 10 === 0 ? 2 : -2
             if (this.posicao.x === 0 || this.posicao.x > canvas.width - this.largura){
                 this.velocidade.y = 5;
                 this.velocidade.x = -this.velocidade.x
@@ -142,9 +221,42 @@ class InimigoNivel1 extends Inimigo {
             this.posicao.y += this.velocidade.y
         }
     }
+}
+
+class InimigoNivel2 extends Inimigo {
+    constructor(imageSrc, posX, posY, corProjetil){
+        super(imageSrc, posX, posY)
+        this.corProjetil = corProjetil
+    }
+
+    updateVelocidade(){
+        if(this.posicao) {         
+            this.velocidade.x = this.posicao.y % 10 === 0 ? 3 : -3
+            if (this.posicao.x === 0 || this.posicao.x > canvas.width - this.largura){
+                this.velocidade.y = 5;
+                this.velocidade.x = -this.velocidade.x
+            } else {
+                this.velocidade.y = 0;
+            }
+        }
+    }
+
+    update() {
+        if(this.imagem && this.posicao){
+
+            if (Math.random() < 0.0003) {
+                this.atirar();
+            }
+            
+            this.updateVelocidade();
+            this.desenhar()
+            this.posicao.x += this.velocidade.x
+            this.posicao.y += this.velocidade.y
+        }
+    }
 
     atirar() {
-        projeteis.push(new Projetil(0, 10, this.corProjetil, inimigo.posicao.x + (inimigo.largura / 2), inimigo.posicao.y, 3))
+        projeteisInimigos.push(new Projetil(0, 3, this.corProjetil, this.posicao.x + (this.largura / 2), this.posicao.y, 3))
     }
 }
 
@@ -177,32 +289,124 @@ class Projetil {
     }
 }
 
-function animacao() {
-    requestAnimationFrame(animacao)
+/* FUNÕES PRINCIPAIS */
+
+async function fasesDoJogo(){
+    switch(stage) {
+        case 1:
+            limpaCanvas();
+            carregarInimigos('./img/enemy1.png', 'blue', InimigoNivel1, 5, 10);
+            fase1Tela();
+            break;
+        case 2:
+            limpaCanvas();
+            carregarInimigos('./img/enemy2.png', 'white', InimigoNivel2, 10, 20);
+            fase2Tela();
+            break;
+        case 0:
+            writeMessage("GAME OVER!")
+            break;
+        default:
+            break;
+    }
+}
+
+async function fase1Tela(){
+    writeMessage("FASE 1")
+    await delay(5000)
+    fase1()
+}
+
+function fase1() {
+
+    let requestID = requestAnimationFrame(fase1)
+
+    if (inimigos.length < 48) {
+        stage = 2;
+        cancelAnimationFrame(requestID)
+        fasesDoJogo()
+        return 
+    }
+
     context.fillStyle = 'black'
     context.fillRect(0, 0, canvas.width, canvas.height)
+
     jogador.update()
 
-    projeteis.forEach((projetil, indice) => {
-        if (projetil.posicao.x > canvas.width || projetil.posicao.x < 0 || projetil.posicao.y > canvas.height + projetil.raio || projetil.posicao.y < 0) {
+    for (let [indice, projetil] of projeteis.entries()) {
+        
+        if (projetilForaCanvas(projetil)) {
             projeteis.splice(indice,1)
-        } else {
-
-            let inimigoAtingido = inimigosNivel1.find((inimigo) => inimigo.posicao.x < projetil.posicao.x - projetil.raio && inimigo.posicao.x + inimigo.largura > projetil.posicao.x 
-            && inimigo.posicao.y < projetil.posicao.y - projetil.raio && inimigo.posicao.y + inimigo.altura > projetil.posicao.y)
+        } 
+        else {
+            let inimigoAtingido = inimigos.find((inimigo) => objetoAtingido(inimigo, projetil))
     
             if (inimigoAtingido) {
                 projeteis.splice(indice, 1)
-                inimigosNivel1.splice(inimigosNivel1.indexOf(inimigoAtingido), 1)
+                inimigos.splice(inimigos.indexOf(inimigoAtingido), 1)
             }
             else {
                 projetil.update()
             }
         }
-    })
+        
+    }
 
-    inimigosNivel1.forEach((inimigo) => inimigo.update())
+    for (let [indice, projetilInimigo] of projeteisInimigos.entries()) {
 
+        if (projetilForaCanvas(projetilInimigo)) {
+            projeteisInimigos.splice(indice,1)
+        } 
+
+        else if (objetoAtingido(jogador, projetilInimigo)) {
+            stage = 0;
+            cancelAnimationFrame(requestID)
+            fasesDoJogo()
+            return
+        } else {
+            projetilInimigo.update()
+        }
+    }
+
+    for (let inimigo of inimigos){
+        if (navesColididas(jogador, inimigo)) {
+                stage = 0;
+                cancelAnimationFrame(requestID)
+                fasesDoJogo()
+                return
+        } else {
+            inimigo.update()
+        }
+    }    
+    
+    controlaNave();
+}
+
+async function fase2Tela(){
+    writeMessage('Fase 1 Concluida')
+    await delay(3000);
+    writeMessage('Fase 2')
+    await delay(3000);
+    fase1()
+}
+
+/* FUNÕES AUXILIARES */
+
+function projetilForaCanvas (projetil) {
+    return (projetil.posicao.x > canvas.width || projetil.posicao.x < 0 || projetil.posicao.y > canvas.height + projetil.raio || projetil.posicao.y < 0)
+}
+
+function objetoAtingido(objeto, projetil) {
+    return (objeto.posicao.x < projetil.posicao.x - projetil.raio && objeto.posicao.x + objeto.largura > projetil.posicao.x 
+            && objeto.posicao.y < projetil.posicao.y - projetil.raio && objeto.posicao.y + objeto.altura > projetil.posicao.y)
+}
+
+function navesColididas (nave1, nave2) {
+    return (nave1.posicao.x + nave1.largura > nave2.posicao.x && nave1.posicao.x < nave2.posicao.x + nave2.largura
+            && nave1.posicao.y > nave2.posicao.y - nave2.altura && nave1.posicao.y - nave1.altura < nave2.posicao.y)
+}
+
+function controlaNave() {
     if (teclas.a.pressionado && jogador.posicao.x >= 0) {
         jogador.velocidade.x = -5
     } else if (teclas.d.pressionado && jogador.posicao.x + jogador.largura <= canvas.width){
@@ -218,82 +422,40 @@ function animacao() {
     } else {
         jogador.velocidade.y = 0
     }
-
-
 }
 
-let projeteis = []
+function writeMessage(msg) {
+    context.fillStyle = 'black'
+    context.fillRect(0, 0, canvas.width, canvas.height)
+    context.fillStyle = "white";
+    context.textAlign = "center";
+    context.font = "30px fantasy";
+    context.fillText(msg, canvas.width/2, canvas.height/2);
+}
+
+function carregarInimigos(imgPath, corTiro, objInimigo, linhas, colunas) {
+
+    for (let x = 1; x < colunas + 1; x++) {
+        for (let y = 1; y < linhas + 1; y++) {
+            inimigos.push(new objInimigo(imgPath, x * 30, y * 30, corTiro))
+        }
+    }
+}
+
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function limpaCanvas() {
+    projeteis = []
+    projeteisInimigos = []
+    inimigos = []
+};
+
+/* INICIO DO JOGO */
 
 const jogador = new NavePrincipal();
 
-const inimigosNivel1 = []
+stage = 1;
 
-for (let x = 1; x < 11; x++) {
-    for (let y = 1; y < 6; y++) {
-        inimigosNivel1.push(new InimigoNivel1('./img/enemy1.png', x * 30, y * 30, 'blue'))
-    }
-}
-
-
-animacao()
-
-window.addEventListener('keydown', (evento) => {
-    switch (evento.key) {
-        case 'a':
-            teclas.a.pressionado = true
-            break
-
-        case 's':
-            teclas.s.pressionado = true
-            break
-
-        case 'w':
-            teclas.w.pressionado = true
-            break
-
-        case 'd':
-            teclas.d.pressionado = true
-            break
-
-        case ' ':
-
-        if (!teclas.space.pressionado){
-            jogador.atirar()
-            intervaloDisparos = setInterval(() => jogador.atirar(), 500);
-        }
-        teclas.space.pressionado = true
-            
-        break
-
-        default:
-            break
-    }
-})
-
-window.addEventListener('keyup', (evento) => {
-    switch (evento.key) {
-        case 'a':
-            teclas.a.pressionado = false
-            break
-
-        case 's':
-            teclas.s.pressionado = false
-            break
-
-        case 'w':
-            teclas.w.pressionado = false
-            break
-
-        case 'd':
-            teclas.d.pressionado = false
-            break
-
-        case ' ':
-            clearInterval(intervaloDisparos)
-            teclas.space.pressionado = false
-            break
-
-        default:
-            break
-    }
-})
+fasesDoJogo();
