@@ -135,7 +135,7 @@ class NavePrincipal {
     }
 
     atirar() {
-        projeteis.push(new Projetil(0, -10, 'red', jogador.posicao.x + (jogador.largura / 2), jogador.posicao.y, 3))
+        projeteis.push(new Projetil(0, -10, 'blue', jogador.posicao.x + (jogador.largura / 2), jogador.posicao.y, 3))
     }
     
     desenhar() {
@@ -260,6 +260,57 @@ class InimigoNivel2 extends Inimigo {
     }
 }
 
+class InimigoNivel3 extends Inimigo {
+    constructor(imageSrc, posX, posY, corProjetil){
+        super(imageSrc, posX, posY)
+        this.corProjetil = corProjetil
+        this.velocidade.x = 2
+    }
+
+    updateVelocidade(){
+        if(this.posicao) {         
+
+            if (this.posicao.x < 0 || this.posicao.x > canvas.width - this.largura) {
+                this.velocidade.x = -this.velocidade.x
+            }
+
+            if(this.posicao.x < canvas.width / 4){
+                this.velocidade.y = 2
+            } else if(this.posicao.x < canvas.width / 2){
+                this.velocidade.y = -1
+            } else if(this.posicao.x < 3*canvas.width / 4){
+                this.velocidade.y = 1
+            } else {
+                this.velocidade.y = -1
+            }
+        }
+
+    }
+
+    update() {
+        if(this.imagem && this.posicao){
+
+            if (Math.random() < 0.0003) {
+                this.atirar();
+            }
+            
+            this.updateVelocidade();
+            this.desenhar()
+
+            
+
+            this.posicao.x += this.velocidade.x
+            this.posicao.y += this.velocidade.y
+        }
+    }
+
+    atirar() {
+        projeteisInimigos.push(new Projetil(0, 3, this.corProjetil, this.posicao.x + (this.largura / 2), this.posicao.y, 3))
+        projeteisInimigos.push(new Projetil(3, 3, this.corProjetil, this.posicao.x + (this.largura / 2), this.posicao.y, 3))
+        projeteisInimigos.push(new Projetil(-3, 3, this.corProjetil, this.posicao.x + (this.largura / 2), this.posicao.y, 3))
+    }
+}
+
 class Projetil {
     constructor(velocidadeX, velocidadeY, cor, posicaoX, posicaoY, raio){
         this.velocidade = {
@@ -295,13 +346,22 @@ async function fasesDoJogo(){
     switch(stage) {
         case 1:
             limpaCanvas();
-            carregarInimigos('./img/enemy1.png', 'blue', InimigoNivel1, 5, 10);
+            carregarInimigos('./img/enemy1.png', 'red', InimigoNivel1, 10, 20);
             fase1Tela();
             break;
         case 2:
             limpaCanvas();
-            carregarInimigos('./img/enemy2.png', 'white', InimigoNivel2, 10, 20);
+            carregarInimigos('./img/enemy2.png', 'red', InimigoNivel2, 10, 20);
             fase2Tela();
+            break;
+        case 3:
+            limpaCanvas();
+            carregarInimigos('./img/enemy3.png', 'red', InimigoNivel3, 3, 50);
+            fase3Tela();
+            break;
+        case 4:
+            limpaCanvas();
+            writeMessage("VOCE VENCEU!")
             break;
         case 0:
             writeMessage("GAME OVER!")
@@ -321,8 +381,9 @@ function fase1() {
 
     let requestID = requestAnimationFrame(fase1)
 
-    if (inimigos.length < 48) {
-        stage = 2;
+    if (inimigos.length < 1) {
+        stage = stage += 1;
+        console.log(stage)
         cancelAnimationFrame(requestID)
         fasesDoJogo()
         return 
@@ -386,6 +447,14 @@ async function fase2Tela(){
     writeMessage('Fase 1 Concluida')
     await delay(3000);
     writeMessage('Fase 2')
+    await delay(3000);
+    fase1()
+}
+
+async function fase3Tela(){
+    writeMessage('Fase 2 Concluida')
+    await delay(3000);
+    writeMessage('Fase 3')
     await delay(3000);
     fase1()
 }
