@@ -10,6 +10,7 @@ canvas.height = window.innerHeight
 
 /* VARIÁVEIS GLOBAIS */
 let stage;
+let etapaGame
 let projeteis = []
 let projeteisInimigos = []
 let inimigos = []
@@ -131,6 +132,13 @@ class NavePrincipal {
                 x: canvas.width / 2 - (this.largura / 2),
                 y: canvas.height - this.altura - 15
             }
+        }
+    }
+
+    resetarPosicao() {
+        this.posicao = {
+            x: canvas.width / 2 - (this.largura / 2),
+            y: canvas.height - this.altura - 15
         }
     }
 
@@ -311,6 +319,111 @@ class InimigoNivel3 extends Inimigo {
     }
 }
 
+
+class bossFinal extends Inimigo {
+    constructor(imageSrc, posX, posY, corProjetil){
+        super(imageSrc, posX, posY)
+        this.corProjetil = corProjetil
+        this.velocidade.x = 7
+        this.intervaloMovimentos = setInterval(() => (this.currentMov = Math.random() > 0.5 ? 1 : 2),5000)
+    }
+
+    currentMov = 1;
+    intervaloMovimentos;
+    vida = 10;
+
+    atingido() {
+        this.vida -= 1
+
+        if(this.vida < 1) {
+            clearInterval(intervaloMovimentos);
+        }
+    }
+
+    updateVelocidade1(){
+        if(this.posicao) {         
+
+            if (this.posicao.x < 0 || this.posicao.x > canvas.width - this.largura) {
+                this.velocidade.x = -this.velocidade.x
+            }
+
+            if (this.posicao.y > canvas.height) {
+                this.velocidade.y = -canvas.height
+            }
+
+            else if(this.posicao.x < canvas.width / 4){
+                this.velocidade.y = 4
+            } else if(this.posicao.x < canvas.width / 2){
+                this.velocidade.y = -2
+            } else if(this.posicao.x < 3*canvas.width / 4){
+                this.velocidade.y = 2
+            } else {
+                this.velocidade.y = -2
+            }
+        }
+
+    }
+
+    updateVelocidade2(){
+        if(this.posicao) {  
+            if(this.posicao.y >= canvas.height) {
+                this.velocidade.y = -canvas.height
+            }       
+            else if (this.posicao.x < 0 || this.posicao.x > canvas.width - this.largura){
+                this.velocidade.y = 100;
+                this.velocidade.x = -this.velocidade.x
+            } else {
+                this.velocidade.y = 0;
+            }
+        }
+
+    }
+
+
+
+    update() {
+        if(this.imagem && this.posicao){
+
+            if (Math.random() < 0.025) {  
+                this.atirar1();
+            }
+
+            if (Math.random() < 0.025) {
+                this.atirar2();
+            }
+
+            if (Math.random() < 0.025) {
+                this.atirar3();
+            }
+            
+            this.currentMov === 1 ? this.updateVelocidade1() : this.updateVelocidade2();
+            this.desenhar()
+
+            
+
+            this.posicao.x += this.velocidade.x
+            this.posicao.y += this.velocidade.y
+        }
+    }
+
+    atirar1() {
+        projeteisInimigos.push(new Projetil(0, 5, this.corProjetil, this.posicao.x + (this.largura / 2) + 20, this.posicao.y, 3))
+        projeteisInimigos.push(new Projetil(0, 5, this.corProjetil, this.posicao.x + (this.largura / 2), this.posicao.y, 3))
+        projeteisInimigos.push(new Projetil(0, 5, this.corProjetil, this.posicao.x + (this.largura / 2) -20, this.posicao.y, 3))
+    }
+
+    atirar2() {
+        projeteisInimigos.push(new Projetil(0, -5, this.corProjetil, this.posicao.x + (this.largura / 2) + 20, this.posicao.y, 3))
+        projeteisInimigos.push(new Projetil(0, -5, this.corProjetil, this.posicao.x + (this.largura / 2), this.posicao.y, 3))
+        projeteisInimigos.push(new Projetil(0, -5, this.corProjetil, this.posicao.x + (this.largura / 2) -20, this.posicao.y, 3))
+    }
+
+    atirar3() {
+        projeteisInimigos.push(new Projetil(5, 0, this.corProjetil, this.posicao.x + (this.largura / 2), this.posicao.y + (this.altura / 2), 3))
+        projeteisInimigos.push(new Projetil(-5, 0, this.corProjetil, this.posicao.x + (this.largura / 2), this.posicao.y + (this.altura / 2), 3))
+    }
+}
+
 class Projetil {
     constructor(velocidadeX, velocidadeY, cor, posicaoX, posicaoY, raio){
         this.velocidade = {
@@ -356,15 +469,23 @@ async function fasesDoJogo(){
             break;
         case 3:
             limpaCanvas();
-            carregarInimigos('./img/enemy3.png', 'red', InimigoNivel3, 3, 50);
+            carregarInimigos('./img/enemy3.png', 'red', InimigoNivel3, 4, 30);
             fase3Tela();
             break;
         case 4:
             limpaCanvas();
-            writeMessage("VOCE VENCEU!")
+            carregarInimigos('./img/finalboss.png', 'green', bossFinal, 1, 1);
+            fase4Tela();
+            break;
+        case 5:
+            limpaCanvas();
+            etapaGame = 'gamewin';
+            etapasGame();
             break;
         case 0:
-            writeMessage("GAME OVER!")
+            limpaCanvas(); 
+            etapaGame = 'gameover';
+            etapasGame();
             break;
         default:
             break;
@@ -378,12 +499,10 @@ async function fase1Tela(){
 }
 
 function fase1() {
-
+    
     let requestID = requestAnimationFrame(fase1)
-
     if (inimigos.length < 1) {
         stage = stage += 1;
-        console.log(stage)
         cancelAnimationFrame(requestID)
         fasesDoJogo()
         return 
@@ -404,7 +523,15 @@ function fase1() {
     
             if (inimigoAtingido) {
                 projeteis.splice(indice, 1)
-                inimigos.splice(inimigos.indexOf(inimigoAtingido), 1)
+
+                if (inimigoAtingido instanceof bossFinal) {
+                    inimigoAtingido.atingido()
+                    if (inimigoAtingido.vida < 1) {
+                        inimigos.splice(inimigos.indexOf(inimigoAtingido), 1)
+                    }
+                } else {
+                    inimigos.splice(inimigos.indexOf(inimigoAtingido), 1)
+                }
             }
             else {
                 projetil.update()
@@ -459,6 +586,71 @@ async function fase3Tela(){
     fase1()
 }
 
+async function fase4Tela(){
+    writeMessage('Fase 3 Concluida')
+    await delay(3000);
+    writeMessage('Fase 4 Chefe final')
+    await delay(3000);
+    fase1()
+}
+
+async function telaInicial() {
+    context.fillStyle = 'black'
+    context.fillRect(0, 0, canvas.width, canvas.height)
+    context.textAlign = "center";
+    context.font = "60px fantasy";
+    context.fillStyle = "white";
+    context.fillText("SPACE INVADERS JS", canvas.width/2, canvas.height/2);
+    context.font = "30px fantasy";
+    context.fillText("Pressione espaço para iniciar", canvas.width/2, canvas.height/2 + 60);
+    while(!teclas.space.pressionado) {
+        await delay(50);
+    }
+
+    etapaGame = 'jogo'
+    stage = 1
+
+    etapasGame();
+}
+
+async function fimDoJogo(condição){
+    context.fillStyle = 'black'
+    context.fillRect(0, 0, canvas.width, canvas.height)
+    context.textAlign = "center";
+    context.font = "60px fantasy";
+    context.fillStyle = "white";
+    if (condição === 'lose') context.fillText("VOCE PERDEU", canvas.width/2, canvas.height/2);
+    else context.fillText("VOCE VENCEU", canvas.width/2, canvas.height/2);
+    context.font = "30px fantasy";
+    context.fillText("Pressione espaço para reiniciar", canvas.width/2, canvas.height/2 + 60);
+    while(!teclas.space.pressionado) {
+        await delay(50);
+    }
+
+    etapaGame = 'jogo'
+    stage = 1
+
+    etapasGame();
+}
+
+function etapasGame(){
+    switch(etapaGame){
+        case 'inicio': 
+            telaInicial();
+            break;
+        case 'jogo': 
+            fasesDoJogo();
+            break;
+        case 'gameover': 
+            fimDoJogo('lose');
+            break;
+        case 'gamewin': 
+            fimDoJogo('win');
+            break;
+        default: break
+    }
+}
+
 /* FUNÕES AUXILIARES */
 
 function projetilForaCanvas (projetil) {
@@ -472,7 +664,7 @@ function objetoAtingido(objeto, projetil) {
 
 function navesColididas (nave1, nave2) {
     return (nave1.posicao.x + nave1.largura > nave2.posicao.x && nave1.posicao.x < nave2.posicao.x + nave2.largura
-            && nave1.posicao.y > nave2.posicao.y - nave2.altura && nave1.posicao.y - nave1.altura < nave2.posicao.y)
+            && nave1.posicao.y < nave2.posicao.y + nave2.altura && nave1.posicao.y > nave2.posicao.y - nave2.altura)
 }
 
 function controlaNave() {
@@ -519,6 +711,7 @@ function limpaCanvas() {
     projeteis = []
     projeteisInimigos = []
     inimigos = []
+    jogador.resetarPosicao();
 };
 
 /* INICIO DO JOGO */
@@ -527,4 +720,6 @@ const jogador = new NavePrincipal();
 
 stage = 1;
 
-fasesDoJogo();
+etapaGame = 'inicio';
+
+etapasGame();
