@@ -370,7 +370,7 @@ class bossFinal extends Inimigo {
 
     currentMov = 1;
     intervaloMovimentos;
-    vida = 10;
+    vida = 50;
 
     atingido() {
         this.vida -= 1
@@ -547,7 +547,7 @@ async function fasesDoJogo(){
         case 3:
             jogador.pontos += 150;
             limpaCanvas();
-            carregarInimigos('./img/enemy3.png', 'gray', InimigoNivel3, 4, 30);
+            carregarInimigos('./img/enemy3.png', 'red', InimigoNivel3, 4, 30);
             fase3Tela();
             break;
         case 4:
@@ -593,6 +593,11 @@ function fase1() {
     context.fillStyle = 'white'
     context.textAlign = 'start';
     context.fillText(`Pontos: ${jogador.pontos}` , 20, 50);
+
+    if(stage === 4) {
+        context.textAlign = 'end';
+        context.fillText(`Vida Boss: ${inimigos[0].vida}` , canvas.width - 20, 50);
+    }
 
     jogador.update()
     particulas.forEach(particula => {
