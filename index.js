@@ -119,6 +119,8 @@ class NavePrincipal {
             y: 0
         }
 
+        this.pontos = 0;
+
         this.imagem = new Image()
 
         this.imagem.src = './img/navePrincipal.png'
@@ -500,21 +502,25 @@ async function fasesDoJogo(){
             fase1Tela();
             break;
         case 2:
+            jogador.pontos += 50;
             limpaCanvas();
             carregarInimigos('./img/enemy2.png', 'yellow', InimigoNivel2, 10, 20);
             fase2Tela();
             break;
         case 3:
+            jogador.pontos += 150;
             limpaCanvas();
             carregarInimigos('./img/enemy3.png', 'gray', InimigoNivel3, 4, 30);
             fase3Tela();
             break;
         case 4:
+            jogador.pontos += 300
             limpaCanvas();
             carregarInimigos('./img/finalboss.png', 'green', bossFinal, 1, 1);
             fase4Tela();
             break;
         case 5:
+            jogador.pontos += 1000;
             limpaCanvas();
             etapaGame = 'gamewin';
             etapasGame();
@@ -547,6 +553,9 @@ function fase1() {
 
     context.fillStyle = 'black'
     context.fillRect(0, 0, canvas.width, canvas.height)
+    context.fillStyle = 'white'
+    context.textAlign = 'start';
+    context.fillText(`Pontos: ${jogador.pontos}` , 20, 50);
 
     jogador.update()
     particulas.forEach(particula => {
@@ -567,7 +576,6 @@ function fase1() {
             let inimigoAtingido = inimigos.find((inimigo) => objetoAtingido(inimigo, projetil))
     
             if (inimigoAtingido) {
-                console.log(inimigoAtingido)
                 projeteis.splice(indice, 1)
 
                 for (let i = 0; i < 3; i++){
@@ -581,6 +589,20 @@ function fase1() {
                     }
                 } else {
                     inimigos.splice(inimigos.indexOf(inimigoAtingido), 1)
+
+                    switch( inimigoAtingido.constructor.name ) {
+                        case 'InimigoNivel1': 
+                            jogador.pontos += 1
+                            break;
+                        case 'InimigoNivel2': 
+                            jogador.pontos += 2
+                            break;
+                        case 'InimigoNivel3': 
+                            jogador.pontos += 3
+                            break;
+                        default:
+                            break
+                    }
                 }
             }
             else {
@@ -672,7 +694,9 @@ async function fimDoJogo(condição){
     if (condição === 'lose') context.fillText("VOCE PERDEU", canvas.width/2, canvas.height/2);
     else context.fillText("VOCE VENCEU", canvas.width/2, canvas.height/2);
     context.font = "30px fantasy";
-    context.fillText("Pressione espaço para reiniciar", canvas.width/2, canvas.height/2 + 60);
+
+    if (condição === 'win') context.fillText(`Pontuação: ${jogador.pontos}`, canvas.width/2, canvas.height/2 + 60);
+    context.fillText("Pressione espaço para reiniciar", canvas.width/2, canvas.height/2 + 120);
     while(!teclas.space.pressionado) {
         await delay(50);
     }
