@@ -676,6 +676,9 @@ function fase1() {
                 cancelAnimationFrame(requestID)
                 fasesDoJogo()
                 return
+        } else if (inimigo.posicao.y - inimigo.altura > canvas.height ) {
+            inimigos.splice(inimigos.indexOf(inimigo), 1)
+            jogador.pontos -= 1
         } else {
             inimigo.update()
         }
