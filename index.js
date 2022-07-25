@@ -46,8 +46,13 @@ const teclas = {
 /* Event listeners */
 
 window.addEventListener('keydown', (evento) => {
+    console.log(evento.key)
     switch (evento.key) {
         case 'a':
+            teclas.a.pressionado = true
+            break
+
+        case 'A':
             teclas.a.pressionado = true
             break
 
@@ -55,11 +60,23 @@ window.addEventListener('keydown', (evento) => {
             teclas.s.pressionado = true
             break
 
+        case 'S':
+            teclas.s.pressionado = true
+            break
+
         case 'w':
             teclas.w.pressionado = true
             break
 
+        case 'W':
+        teclas.w.pressionado = true
+        break
+
         case 'd':
+            teclas.d.pressionado = true
+            break
+
+        case 'D':
             teclas.d.pressionado = true
             break
 
@@ -84,17 +101,37 @@ window.addEventListener('keyup', (evento) => {
             teclas.a.pressionado = false
             break
 
+        case 'A':
+            teclas.a.pressionado = false
+            break
+
+
         case 's':
             teclas.s.pressionado = false
             break
+
+        case 'S':
+            teclas.s.pressionado = false
+            break
+    
 
         case 'w':
             teclas.w.pressionado = false
             break
 
+        case 'W':
+            teclas.w.pressionado = false
+            break
+    
+
         case 'd':
             teclas.d.pressionado = false
             break
+
+        case 'D':
+            teclas.d.pressionado = false
+            break
+    
 
         case ' ':
             clearInterval(intervaloDisparos)
