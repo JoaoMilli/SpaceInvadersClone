@@ -14,6 +14,7 @@ let etapaGame
 let projeteis = []
 let projeteisInimigos = []
 let inimigos = []
+let particulas = []
 
 let intervaloDisparos;
 
@@ -453,6 +454,42 @@ class Projetil {
     }
 }
 
+class Particula {
+    constructor(velocidadeX, velocidadeY, posicaoX, posicaoY, raio, estrela, cor){
+        this.velocidade = {
+            x: velocidadeX,
+            y: velocidadeY
+        }
+        this.estrela = estrela
+        this.raio = raio
+        this.posicao = {
+            x: posicaoX,
+            y: posicaoY
+        }
+        this.raio = raio
+        this.cor = cor 
+        this.opacidade = 1;
+    }
+
+    desenhar() {
+        context.save()
+        context.globalAlpha = this.opacidade
+        context.beginPath()
+        context.arc(this.posicao.x, this.posicao.y, this.raio, 0, Math.PI * 2)
+        context.fillStyle = this.cor
+        context.fill()
+        context.closePath()
+        context.restore()
+    }
+
+    update() {
+        this.desenhar()
+        this.posicao.x += this.velocidade.x
+        this.posicao.y += this.velocidade.y
+        if (this.opacidade > 0 && !this.estrela) this.opacidade -= 0.01
+    }
+}
+
 /* FUNÕES PRINCIPAIS */
 
 async function fasesDoJogo(){
@@ -464,12 +501,12 @@ async function fasesDoJogo(){
             break;
         case 2:
             limpaCanvas();
-            carregarInimigos('./img/enemy2.png', 'red', InimigoNivel2, 10, 20);
+            carregarInimigos('./img/enemy2.png', 'yellow', InimigoNivel2, 10, 20);
             fase2Tela();
             break;
         case 3:
             limpaCanvas();
-            carregarInimigos('./img/enemy3.png', 'red', InimigoNivel3, 4, 30);
+            carregarInimigos('./img/enemy3.png', 'gray', InimigoNivel3, 4, 30);
             fase3Tela();
             break;
         case 4:
@@ -512,6 +549,14 @@ function fase1() {
     context.fillRect(0, 0, canvas.width, canvas.height)
 
     jogador.update()
+    particulas.forEach(particula => {
+        if (particula.opacidade <= 0) particulas.splice(particulas.indexOf(particula),1)
+        else if (particula.posicao.y - particula.raio > canvas.height ){
+            particula.posicao.x = Math.random() * canvas.width
+            particula.posicao.y = Math.random() * canvas.height
+        }
+        else particula.update();
+    })
 
     for (let [indice, projetil] of projeteis.entries()) {
         
@@ -522,7 +567,12 @@ function fase1() {
             let inimigoAtingido = inimigos.find((inimigo) => objetoAtingido(inimigo, projetil))
     
             if (inimigoAtingido) {
+                console.log(inimigoAtingido)
                 projeteis.splice(indice, 1)
+
+                for (let i = 0; i < 3; i++){
+                    particulas.push(new Particula((Math.random() - 0.5)*2, (Math.random() - 0.5)*2,inimigoAtingido.posicao.x, inimigoAtingido.posicao.y, Math.random()*2,false,inimigoAtingido.corProjetil))
+                }
 
                 if (inimigoAtingido instanceof bossFinal) {
                     inimigoAtingido.atingido()
@@ -717,6 +767,10 @@ function limpaCanvas() {
 /* INICIO DO JOGO */
 
 const jogador = new NavePrincipal();
+
+for (let i = 0; i < 100; i++){
+    particulas.push(new Particula(0,1, canvas.width * Math.random(), canvas.height * Math.random(), Math.random()*3, true, 'white'))
+}
 
 stage = 1;
 
