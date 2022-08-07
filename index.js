@@ -46,7 +46,6 @@ const teclas = {
 /* Event listeners */
 
 window.addEventListener('keydown', (evento) => {
-    console.log(evento.key)
     switch (evento.key) {
         case 'a':
             teclas.a.pressionado = true
@@ -365,7 +364,9 @@ class bossFinal extends Inimigo {
         super(imageSrc, posX, posY)
         this.corProjetil = corProjetil
         this.velocidade.x = 7
-        this.intervaloMovimentos = setInterval(() => (this.currentMov = Math.random() > 0.5 ? 1 : 2),5000)
+        this.intervaloMovimentos = setInterval(() => {
+            this.currentMov = Math.random() > 0.5 ? 1 : 2
+        },5000)
     }
 
     currentMov = 1;
@@ -375,8 +376,8 @@ class bossFinal extends Inimigo {
     atingido() {
         this.vida -= 1
 
-        if(this.vida < 1) {
-            clearInterval(intervaloMovimentos);
+        if(this.vida < 1 && this.intervaloMovimentos) {
+            clearInterval(this.intervaloMovimentos);
         }
     }
 
@@ -746,6 +747,10 @@ async function fimDoJogo(condição){
         await delay(50);
     }
 
+    if(jogador){
+        jogador.pontos = 0
+    }
+
     etapaGame = 'jogo'
     stage = 1
 
@@ -834,14 +839,12 @@ function limpaCanvas() {
 };
 
 /* INICIO DO JOGO */
-
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
 const jogador = new NavePrincipal();
 
 for (let i = 0; i < 100; i++){
     particulas.push(new Particula(0,1, canvas.width * Math.random(), canvas.height * Math.random(), Math.random()*3, true, 'white'))
 }
-
-stage = 1;
 
 etapaGame = 'inicio';
 
